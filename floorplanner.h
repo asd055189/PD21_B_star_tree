@@ -1,6 +1,7 @@
 #ifndef FLOORPLANNER_H
 #define FLOORPLANNER_H
 #include "bits/stdc++.h"
+#include <unordered_map>
 #include "module.h"
 using namespace std;
 

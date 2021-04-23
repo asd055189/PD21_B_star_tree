@@ -74,15 +74,11 @@ Floorplanner::Floorplanner(fstream& input_blk,fstream& input_net){
                 unordered_map<string,int>::iterator it2=block_list_map.find(str);
                 if(it1!=terminal_list_map.end())
                     tmp.addTerm(&terminal_list[it1->second]);
-                else if(it2!=block_list_map.end());
+                else if(it2!=block_list_map.end())
                 {
-                    //cout <<str;
-                    tmp.addTerm(&terminal_list[it2->second]);
-                    //cout <<it2->first-;
-                    //cout <<block_list.at("bk1").getName();
+                    tmp.addTerm(&block_list[it2->second]);
                 }
             }
-            //cout <<endl;
             net.push_back(tmp);
         }
     }
