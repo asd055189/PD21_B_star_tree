@@ -1,0 +1,4 @@
+*.block
+*.nets
+.DS_Store
+*.gch

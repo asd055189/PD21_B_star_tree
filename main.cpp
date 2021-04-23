@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <bits/stdc++.h>
 #include "floorplanner.h"
 using namespace std;
 
