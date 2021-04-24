@@ -15,8 +15,11 @@ class Floorplanner{
         int getbound_height(){return bound_height;}
         int getnum_block(){return num_block;}
         int getnum_terminal(){return num_terminal;}
+        void packing();
+        void contourline(Node* node,int X1);
         void DFS(Node *node);
         void output();
+        void plot();
     private:
         int bound_width;
         int bound_height;
@@ -30,6 +33,7 @@ class Floorplanner{
         vector<Terminal> terminal_list;
         Node* tree_array;
         vector<Block> sorted_list;
+        Line* line;
 };
 
 

@@ -133,20 +133,154 @@ void Floorplanner::initial_B_star_tree() {
             break;
         h = 0;
         root->left = new Node;
+        root->left->parent = root;
         root = root->left;
     }
 }
 
+void Floorplanner::packing()
+{
+
+}
+
+void Floorplanner::contourline(Node* node, int X1)
+{
+    int maxY=0;
+    Line *pre = nullptr;
+    Line* cur=line;
+    while (cur !=nullptr) {
+        if (cur->x1 < X1 &&X1< cur->x2 ) {//case : x1-X1 survive
+            if (cur->Y > maxY)
+                maxY = cur->Y;
+            Line* tmp=new Line;
+            tmp->x1= cur->x1;
+            tmp->x2 = X1;
+            tmp->Y = cur->Y;
+            tmp->next = cur->next;
+            if (pre != nullptr)
+                pre->next = tmp;
+            else
+                line = tmp;
+            Line* t = cur;
+            delete t;
+            cur = tmp;
+        }
+        if (cur->x1 < X1 + node->block->getWidth() && X1 + node->block->getWidth() < cur->x2) {//case : X2-x2 survive
+            if (cur->Y > maxY)
+                maxY = cur->Y;
+            Line* tmp = new Line;
+            tmp->x1 = X1 + node->block->getWidth();
+            tmp->x2 = cur->x2;
+            tmp->Y = cur->Y;
+            tmp->next = cur->next;
+            pre->next = tmp;
+            Line* t = cur;
+            delete t;
+            cur = tmp;
+        }
+        if (X1 <= cur->x1 && cur->x1 <= X1 + node->block->getWidth() &&
+            X1 <= cur->x2 && cur->x2 <= X1 + node->block->getWidth()) {//case: all x1-x2 remove 
+            if (cur->Y > maxY)
+                maxY = cur->Y;
+            Line* t = cur;
+            if(pre!=nullptr)
+                pre->next = cur->next;
+            cur = pre;
+            delete t;
+        }
+        if (X1 + node->block->getWidth() <= cur->x1)
+            break;
+        pre = cur;
+        cur = cur->next;
+     }
+    Line* tmp=new Line;
+    tmp->Y = maxY+node->block->getHeight();
+    tmp->x1 = X1;
+    tmp->x2 = X1 + node->block->getWidth();
+    node->block->setPos(tmp->x1, tmp->Y- node->block->getHeight(), tmp->x2, tmp->Y);
+
+    cur = line;
+    while (cur != nullptr) {
+        if (cur->x2==tmp->x1){
+            tmp->next = cur->next;
+            cur->next = tmp;
+        }
+        pre = cur;
+        cur = cur->next;
+    }
+}
+
 void Floorplanner :: DFS(Node* node) {
+    if (node->parent == nullptr) {
+        line = new Line;
+        line->x1 = -1;
+        line->x2 = 0;
+        line->Y = 0;
+
+        Line *root = new Line;
+        root->x1 = 0;
+        root->x2 = node->block->getWidth();
+        root->Y = node->block->getHeight();
+        line->next = root;
+        node->block->setPos(0, 0, node->block->getWidth(), node->block->getHeight());
+    }
+    //else
+        //node->block->setPos(node->parent->block.)
     if (node->left != nullptr) {
+        int X = node->block->getX2();
+        contourline(node->left,X);
         DFS(node->left);
-        cout << "\n=====\n";
+        
     }
     if (node->right != nullptr) {
+        int X = node->block->getX1();
+        contourline(node->right,X);
         DFS(node->right);
     }
-    cout << node->block->getName() << " " << node->block->getWidth() <<" "<<node->block->getHeight()<<endl;
 }
 void Floorplanner::output() {
+    plot();
+}
+void Floorplanner::plot() {
+    /////////////info. to show for gnu/////////////
+    int boundWidth =2*getbound_width();// user-define value (boundary info)
+    int boundHeight = 2*getbound_height();// same above
+ /////////////////////////////////////////////
+ //gnuplot preset
+    fstream outgraph("output.gp", ios::out);
+    outgraph << "reset\n";
+    outgraph << "set tics\n";
+    outgraph << "unset key\n";
+    outgraph << "set title \"The result of Floorplan\"\n";
+    int index = 1;
+    // wirte block info into output.gp
+    for (auto b : sorted_list)// for block
+    {
+        string NodeName = b.getName();
+        int x0 = b.getX1();
+        int y0 =  b.getY1();
+        int x1 = b.getX2();
+        int y1 = b.getY2();
+        int midX = (x0 + x1) / 2;
+        int midY = (y0 + y1) / 2;
 
+        outgraph << "set object " << index << " rect from "
+            << x0 << "," << y0 << " to " << x1 << "," << y1 << " fs empty\n"
+            << "set label " << "\"" << NodeName << "\"" << " at " << midX << "," << midY << " center\n";
+        index++;
+    }
+    // write script to output.gp and execute by system call
+    outgraph << "set object " << index << " rect from "
+        << "0" << "," << "0" << " to " << boundWidth << "," << boundHeight << " fs empty border 3 \n";
+    //<< "set label " << "\"" << "Outline" << "\"" << " at " << boundWidth/2+50 << "," << boundHeight+100 << "right\n";
+
+    outgraph << "set style line 1 lc rgb \"red\" lw 3\n";
+    outgraph << "set border ls 1\n";
+    outgraph << "set terminal png\n";
+    outgraph << "set output \"graph.png\"\n";
+    outgraph << "plot [0:" << boundWidth << "][0:" << boundHeight << "] 0\n";
+    outgraph << "set terminal x11 persist\n";
+    outgraph << "replot\n";
+    outgraph << "exit";
+    outgraph.close();
 }

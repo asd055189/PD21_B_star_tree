@@ -41,29 +41,29 @@ class Block : public Terminal
 {
 public:
     // constructor and destructor
-    Block(string& name, size_t w, size_t h) :
+    Block(string& name, int w, int h) :
         Terminal(name, 0, 0), _w(w), _h(h) { }
     ~Block() { }
 
     // basic access methods
-    const size_t getWidth(bool rotate = false)  { return rotate? _h: _w; }
-    const size_t getHeight(bool rotate = false) { return rotate? _w: _h; }
-    const size_t getArea()  { return _h * _w; }
-    static size_t getMaxX() { return _maxX; }
-    static size_t getMaxY() { return _maxY; }
+    const int getWidth(bool rotate = false)  { return rotate? _h: _w; }
+    const int getHeight(bool rotate = false) { return rotate? _w: _h; }
+    const int getArea()  { return _h * _w; }
+    static int getMaxX() { return _maxX; }
+    static int getMaxY() { return _maxY; }
 
     // set functions
-    void setWidth(size_t w)         { _w = w; }
-    void setHeight(size_t h)        { _h = h; }
-    static void setMaxX(size_t x)   { _maxX = x; }
-    static void setMaxY(size_t y)   { _maxY = y; }
+    void setWidth(int w)         { _w = w; }
+    void setHeight(int h)        { _h = h; }
+    static void setMaxX(int x)   { _maxX = x; }
+    static void setMaxY(int y)   { _maxY = y; }
 
 
 private:
-    size_t          _w;         // width of the block
-    size_t          _h;         // height of the block
-    static size_t   _maxX;      // maximum x coordinate for all blocks
-    static size_t   _maxY;      // maximum y coordinate for all blocks
+    int          _w;         // width of the block
+    int          _h;         // height of the block
+    static int   _maxX;      // maximum x coordinate for all blocks
+    static int   _maxY;      // maximum y coordinate for all blocks
 };
 
 
@@ -109,5 +109,11 @@ public:
     Node* parent= nullptr;
 };
 
-
+class Line {
+public:
+    Line* next=nullptr;
+    int x1;
+    int x2;
+    int Y;
+};
 #endif  // MODULE_H
