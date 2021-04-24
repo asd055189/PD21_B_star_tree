@@ -10,10 +10,13 @@ class Floorplanner{
         Floorplanner(fstream& input_blk,fstream& input_net);
         ~Floorplanner() { }
         void floorplan();
+        void initial_B_star_tree();
         int getbound_width(){return bound_width;}
         int getbound_height(){return bound_height;}
         int getnum_block(){return num_block;}
         int getnum_terminal(){return num_terminal;}
+        void DFS(Node *node);
+        void output();
     private:
         int bound_width;
         int bound_height;
@@ -25,6 +28,8 @@ class Floorplanner{
         unordered_map<string,int>terminal_list_map;
         vector<Block> block_list;
         vector<Terminal> terminal_list;
+        Node* tree_array;
+        vector<Block> sorted_list;
 };
 
 

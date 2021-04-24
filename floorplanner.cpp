@@ -81,12 +81,72 @@ Floorplanner::Floorplanner(fstream& input_blk,fstream& input_net){
             }
             net.push_back(tmp);
         }
-    }
-    for (int i=0;i<net[0].getTermList().size();i++)
-    {
-        //cout <<((Block*)net[0].getTermList()[i])->getName()<<endl;
+        /*for (auto a : net) {
+            for (auto b : a.getTermList()) {
+                cout << b->getName()<<endl;
+            }
+            cout << endl;
+        }*/
     }
 }
 void Floorplanner::floorplan(){
+    initial_B_star_tree();
+    DFS(tree_array);
+    output();
+}
+
+void Floorplanner::initial_B_star_tree() {
+
+    sorted_list=block_list;
+
+    //sort width & height
+    sort(sorted_list.begin(), sorted_list.end(),[](Block a , Block b){
+        if(a.getWidth()!=b.getWidth())
+            return a.getWidth() > b.getWidth();
+        return a.getHeight()>b.getHeight();});
+    tree_array = new Node;
+    Node* root = tree_array;
+
+    int i = 0;
+    int h = 0;
+    while (i != sorted_list.size()) {
+        Node* p = root;
+        while (i!=sorted_list.size()) {
+            
+
+            p->block = &sorted_list[i];
+            h += sorted_list[i].getHeight();
+            i++;
+            if (i == sorted_list.size() )
+                break;
+            if (h+ sorted_list[i].getHeight() < getbound_height()) {
+                p->right = new Node;
+                p->right->parent = p;
+                p = p->right;
+            }
+            else {
+                break;
+            }
+
+        }
+        if (i == sorted_list.size())
+            break;
+        h = 0;
+        root->left = new Node;
+        root = root->left;
+    }
+}
+
+void Floorplanner :: DFS(Node* node) {
+    if (node->left != nullptr) {
+        DFS(node->left);
+        cout << "\n=====\n";
+    }
+    if (node->right != nullptr) {
+        DFS(node->right);
+    }
+    cout << node->block->getName() << " " << node->block->getWidth() <<" "<<node->block->getHeight()<<endl;
+}
+void Floorplanner::output() {
 
 }

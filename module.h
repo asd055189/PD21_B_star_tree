@@ -81,10 +81,33 @@ public:
     void addTerm(Terminal* term) { _termList.push_back(term); }
 
     // other member functions
-    double calcHPWL();
+    double calcHPWL() {
+        int minx = INT_MAX, miny = INT_MAX, maxx = INT_MIN, maxy = INT_MIN;
+        for (auto i : _termList) {
+            if (i->getX1() < minx)
+                minx = i->getX1();
+            if (i->getY1() < miny)
+                miny = i->getY1();
+            if (i->getX2() > maxx)
+                maxx = i->getX2();
+            if (i->getY2() > maxy)
+                maxy = i->getY2();
+        }
+        return (maxx - minx) + (maxy - miny);
+    }
 
 private:
     vector<Terminal*>   _termList;  // list of terminals the net is connected to
 };
+
+class Node
+{
+public:
+    Block *block;
+    Node* left=nullptr;
+    Node* right= nullptr;
+    Node* parent= nullptr;
+};
+
 
 #endif  // MODULE_H
