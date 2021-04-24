@@ -106,36 +106,50 @@ void Floorplanner::initial_B_star_tree() {
         return a.getHeight()>b.getHeight();});
     tree_array = new Node;
     Node* root = tree_array;
-
+    bool *put=new bool[sorted_list.size()]();
     int i = 0;
     int h = 0;
-    while (i != sorted_list.size()) {
+    bool tag=true;
+   while (1) {
+       tag = true;
         Node* p = root;
-        while (i!=sorted_list.size()) {
-            
-
-            p->block = &sorted_list[i];
-            h += sorted_list[i].getHeight();
-            i++;
-            if (i == sorted_list.size() )
-                break;
-            if (h+ sorted_list[i].getHeight() < getbound_height()) {
-                p->right = new Node;
-                p->right->parent = p;
-                p = p->right;
+        while (1) {
+            int width;
+            for (int i=0;i< sorted_list.size();i++){
+                if (put[i] == false) {
+                    put[i] = true;
+                    p->block = &sorted_list[i];
+                    h += sorted_list[i].getHeight();
+                    width = sorted_list[i].getWidth();
+                    break;
+                }
             }
-            else {
-                break;
-            }
-
+            for (int i = 0; i < sorted_list.size(); i++){
+                if (put[i] == false) {
+                    if (sorted_list[i].getWidth()<=width&&h + sorted_list[i].getHeight() < getbound_height()) {
+                        h += sorted_list[i].getHeight();
+                        p->right = new Node;
+                        p->right->block = &sorted_list[i];
+                        p->right->parent = p;
+                        p = p->right;
+                        put[i] = true;
+                    }
+                }
+            }  
+            break;
+         }
+        for (int j = 0; j < sorted_list.size(); j++){
+            if (put[j] == false)
+                tag = false;
         }
-        if (i == sorted_list.size())
+        if (tag)
             break;
         h = 0;
         root->left = new Node;
         root->left->parent = root;
         root = root->left;
     }
+    
 }
 
 void Floorplanner::packing()
@@ -243,15 +257,23 @@ void Floorplanner::output() {
 }
 void Floorplanner::plot() {
     /////////////info. to show for gnu/////////////
-    int boundWidth =2*getbound_width();// user-define value (boundary info)
-    int boundHeight = 2*getbound_height();// same above
+    int boundWidth =getbound_width();// user-define value (boundary info)
+    int boundHeight = getbound_height();// same above
  /////////////////////////////////////////////
  //gnuplot preset
     fstream outgraph("output.gp", ios::out);
     outgraph << "reset\n";
     outgraph << "set tics\n";
     outgraph << "unset key\n";
-    outgraph << "set title \"The result of Floorplan\"\n";
+    Line* p = line;
+    int X, Y=-1;
+    while (p->next != nullptr) {
+        if (p->Y > Y)
+            Y = p->Y;
+        p = p->next;
+    }
+    X = p->x2;
+    outgraph << "set title \"The result of Floorplan"<<"[x:"<<X << "," << boundWidth <<"][y:"<< Y << "," << boundHeight<<"]\"\n";
     int index = 1;
     // wirte block info into output.gp
     for (auto b : sorted_list)// for block
