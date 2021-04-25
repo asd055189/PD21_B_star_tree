@@ -39,6 +39,6 @@ int main(int argc, char** argv)
 
     Floorplanner* fp = new Floorplanner(input_blk, input_net);
     fp->floorplan();
-
+    system("pause");
     return 0;
 }

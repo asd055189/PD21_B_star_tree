@@ -93,17 +93,19 @@ void Floorplanner::floorplan(){
     initial_B_star_tree();
     DFS(tree_array);
     output();
+    for (auto i : net)
+        cout << i.calcHPWL()<<endl;
 }
 
 void Floorplanner::initial_B_star_tree() {
-
-    sorted_list=block_list;
-
+    for (int i = 0; i < block_list.size();i++) {
+        sorted_list.push_back(&block_list[i]);
+    }
     //sort width & height
-    sort(sorted_list.begin(), sorted_list.end(),[](Block a , Block b){
-        if(a.getWidth()!=b.getWidth())
-            return a.getWidth() > b.getWidth();
-        return a.getHeight()>b.getHeight();});
+    sort(sorted_list.begin(), sorted_list.end(),[](Block *a , Block *b){
+        if(a->getWidth()!=b->getWidth())
+            return a->getWidth() > b->getWidth();
+        return a->getHeight()>b->getHeight();});
     tree_array = new Node;
     Node* root = tree_array;
     bool *put=new bool[sorted_list.size()]();
@@ -118,18 +120,18 @@ void Floorplanner::initial_B_star_tree() {
             for (int i=0;i< sorted_list.size();i++){
                 if (put[i] == false) {
                     put[i] = true;
-                    p->block = &sorted_list[i];
-                    h += sorted_list[i].getHeight();
-                    width = sorted_list[i].getWidth();
+                    p->block = sorted_list[i];
+                    h += sorted_list[i]->getHeight();
+                    width = sorted_list[i]->getWidth();
                     break;
                 }
             }
             for (int i = 0; i < sorted_list.size(); i++){
                 if (put[i] == false) {
-                    if (sorted_list[i].getWidth()<=width&&h + sorted_list[i].getHeight() < getbound_height()) {
-                        h += sorted_list[i].getHeight();
+                    if (sorted_list[i]->getWidth()<=width&&h + sorted_list[i]->getHeight() < getbound_height()) {
+                        h += sorted_list[i]->getHeight();
                         p->right = new Node;
-                        p->right->block = &sorted_list[i];
+                        p->right->block = sorted_list[i];
                         p->right->parent = p;
                         p = p->right;
                         put[i] = true;
@@ -269,7 +271,7 @@ void Floorplanner::plot() {
     int X, Y=-1;
     while (p->next != nullptr) {
         if (p->Y > Y)
-            Y = p->Y;
+            Y = p->Y; 
         p = p->next;
     }
     X = p->x2;
@@ -278,11 +280,11 @@ void Floorplanner::plot() {
     // wirte block info into output.gp
     for (auto b : sorted_list)// for block
     {
-        string NodeName = b.getName();
-        int x0 = b.getX1();
-        int y0 =  b.getY1();
-        int x1 = b.getX2();
-        int y1 = b.getY2();
+        string NodeName = b->getName();
+        int x0 = b->getX1();
+        int y0 =  b->getY1();
+        int x1 = b->getX2();
+        int y1 = b->getY2();
         int midX = (x0 + x1) / 2;
         int midY = (y0 + y1) / 2;
 

@@ -82,16 +82,17 @@ public:
 
     // other member functions
     double calcHPWL() {
-        int minx = INT_MAX, miny = INT_MAX, maxx = INT_MIN, maxy = INT_MIN;
+        int minx = INT_MAX, miny = INT_MAX, maxx = 0, maxy = 0;
         for (auto i : _termList) {
-            if (i->getX1() < minx)
-                minx = i->getX1();
-            if (i->getY1() < miny)
-                miny = i->getY1();
-            if (i->getX2() > maxx)
-                maxx = i->getX2();
-            if (i->getY2() > maxy)
-                maxy = i->getY2();
+            int Y = (i->getY2() + i->getY1()) / 2, X = (i->getX2() + i->getX1()) / 2;
+            if (X > maxx)
+                maxx = X;
+            if (Y > maxy)
+                maxy = Y;
+            if (Y < miny)
+                miny = Y;
+            if (X < minx)
+                minx = X;
         }
         return (maxx - minx) + (maxy - miny);
     }

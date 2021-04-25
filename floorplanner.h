@@ -32,7 +32,7 @@ class Floorplanner{
         vector<Block> block_list;
         vector<Terminal> terminal_list;
         Node* tree_array;
-        vector<Block> sorted_list;
+        vector<Block *> sorted_list;
         Line* line;
 };
 
