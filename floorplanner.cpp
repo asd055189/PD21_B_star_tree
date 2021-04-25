@@ -3,7 +3,9 @@
 using namespace std;
 
 
-Floorplanner::Floorplanner(fstream& input_blk,fstream& input_net){
+Floorplanner::Floorplanner(fstream& input_blk,fstream& input_net,double alpha){
+
+    Alpha = alpha;
     string str;
     input_blk>>str;
     if(str=="Outline:"){
@@ -92,9 +94,7 @@ Floorplanner::Floorplanner(fstream& input_blk,fstream& input_net){
 void Floorplanner::floorplan(){
     initial_B_star_tree();
     DFS(tree_array);
-    output();
-    for (auto i : net)
-        cout << i.calcHPWL()<<endl;
+
 }
 
 void Floorplanner::initial_B_star_tree() {
@@ -254,8 +254,28 @@ void Floorplanner :: DFS(Node* node) {
         DFS(node->right);
     }
 }
-void Floorplanner::output() {
+void Floorplanner::output(fstream& out,double runtime) {
     plot();
+    int Wire=0,W,H;
+    int A = calcA(W,H);
+    for (auto i : net) {
+        int w = i.calcHPWL();
+        cout <<w << endl;
+        Wire += w;
+    }
+    cout << "cost  factor : " << Alpha<<endl;
+    cout << "cost : " << Alpha * A + Alpha * Wire<<endl;
+    out << Alpha * A + Alpha * Wire << endl;
+    cout << "area  : " << A << endl;
+    out  << A << endl;
+    cout << "width : " << W << " height : " << H<<endl;
+    out << W << " " << H << endl;
+    cout << "runtime : " << runtime << endl;
+    out << runtime << endl;
+    for (auto node : block_list) {
+        cout << node.getName() << " " << node.getX1() << " " << node.getY1() << " " << node.getX2() << " " << node.getY2() << " " << endl;
+        out << node.getName() << " " << node.getX1() << " " << node.getY1() << " " << node.getX2() << " " << node.getY2() << " " << endl;
+    }
 }
 void Floorplanner::plot() {
     /////////////info. to show for gnu/////////////
@@ -307,4 +327,18 @@ void Floorplanner::plot() {
     outgraph << "replot\n";
     outgraph << "exit";
     outgraph.close();
+}
+void Floorplanner::SA() {
+    double T = 0;//init temperature
+}
+int Floorplanner::calcA(int &W,int &H) {
+    Line* p = line;
+     W, H = -1;
+    while (p->next != nullptr) {
+        if (p->Y > H)
+            H = p->Y;
+        p = p->next;
+    }
+    W = p->x2;
+    return W*H;
 }

@@ -7,7 +7,7 @@ using namespace std;
 
 class Floorplanner{
     public:
-        Floorplanner(fstream& input_blk,fstream& input_net);
+        Floorplanner(fstream& input_blk,fstream& input_net, double alpha  );
         ~Floorplanner() { }
         void floorplan();
         void initial_B_star_tree();
@@ -18,9 +18,12 @@ class Floorplanner{
         void packing();
         void contourline(Node* node,int X1);
         void DFS(Node *node);
-        void output();
+        void output(fstream& out,double runtime);
         void plot();
+        void SA();
+        int calcA(int& W, int& H);
     private:
+        double Alpha;
         int bound_width;
         int bound_height;
         int num_block;

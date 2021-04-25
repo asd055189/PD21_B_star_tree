@@ -5,11 +5,13 @@
 #include "floorplanner.h"
 using namespace std;
 
+
 int main(int argc, char** argv)
 {
     fstream input_blk, input_net, output;
     double alpha;
-
+    time_t start, end;
+    start = time(NULL);
     if (argc == 5) {
         alpha = stod(argv[1]);
         input_blk.open(argv[2], ios::in);
@@ -36,9 +38,11 @@ int main(int argc, char** argv)
                 "<input net file> <output file>" << endl;
         exit(1);
     }
-
-    Floorplanner* fp = new Floorplanner(input_blk, input_net);
+    Floorplanner* fp = new Floorplanner(input_blk, input_net,alpha);
     fp->floorplan();
+    end = time(NULL);
+    double runtime = difftime(end, start);
+    fp->output(output,runtime);
     system("pause");
     return 0;
 }
