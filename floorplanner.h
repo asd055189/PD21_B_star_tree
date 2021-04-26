@@ -22,9 +22,13 @@ class Floorplanner{
         void plot();
         void SA();
         void randomop();
-        Node* copytree(Node *head);
+        Node* copytree(Node *head, Node* parent);
         int calcA(int& W, int& H);
         int calcW();
+
+
+
+        void  clonearray(Node* head);
     private:
         double Alpha;
         int bound_width;

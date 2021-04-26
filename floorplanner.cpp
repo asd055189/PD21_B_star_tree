@@ -248,6 +248,8 @@ void Floorplanner :: DFS(Node* node) {
         line->next = root;
         node->block->setPos(0, 0, node->block->getWidth(), node->block->getHeight());
     }
+   // if (node != nullptr)
+       //cout << node->block->getName() << "   "<<node <<" "<<node->parent <<" " << node->left << " " << node->right << endl;
     //else
         //node->block->setPos(node->parent->block.)
     if (node->left != nullptr) {
@@ -346,49 +348,92 @@ void Floorplanner::SA() {
     int r = 0;//# of iterations
     double avgA, avgW;
     int w, h;
+
     srand(0); //set seed
-    Node *oldtree = copytree(tree_array);
-    bool* rotate = new bool[block_list.size()];
-    double cost = (1-Alpha) * calcW() + Alpha * calcA(w,h);
+
+    Node *oldtree = copytree(tree_array,nullptr);
+    Node* bestans = copytree(tree_array, nullptr);
+    long long int A = 0, W = 0;
+    for (int i = 0; i < 100; i++) {
+        A += calcA(w,h);
+        W += calcW();
+        randomop();
+    }
+    tree_array = copytree(oldtree, nullptr);
+    node_in_tree.clear();
+    clonearray(tree_array);
+    DFS(tree_array); 
+    avgA = A / 100;
+    avgW = W / 100;
+
+    A = calcA(w,h);
+    W = calcW();
+    double cost = (1 - Alpha) * (A / avgA) + Alpha * (W / avgW);
     while (r < 1000) {
-        int i = 0;
+        vector<bool> rotatearr;
         for (auto node : node_in_tree) {
-            rotate[i] = node->block->getrotate();
-            i++;
+            rotatearr.push_back(node->block->getrotate());
         }
+        int i = 0;
         randomop();
         DFS(tree_array);
-        double ncost = (1 - Alpha) * calcW() + Alpha * calcA(w, h);
-        if (w > getbound_width() || h > getbound_height()) {
-            tree_array = copytree(oldtree);
-            i = 0;
-            for (auto node : node_in_tree) {
-                if (rotate[i] != node->block->getrotate())
-                    node->block->_rotate();
-                i++;
+        W = calcW();
+        A = calcA(w, h);
+        double newcost = (1 - Alpha) *(A/ avgA) + Alpha *(W/avgW);
+        double diff = newcost - cost;
+        if (diff > 0) {//up move
+            cout << "===============up move\n";
+            tree_array = copytree(oldtree, nullptr);
+            for (int i = 0; i < node_in_tree.size(); i++) {
+                if (node_in_tree[i]->block->getrotate() != rotatearr[i]) {
+                    node_in_tree[i]->block->_rotate();
+                }
             }
+            node_in_tree.clear();
+            clonearray(tree_array);
             DFS(tree_array);
-            //plot();
         }
-        else { 
-            cout << "===============success============\n";
+        if (diff <= 0) {//down move
+            cout << "===============================down move\n";
+            oldtree = copytree(tree_array, nullptr);
+            node_in_tree.clear();
+            clonearray(tree_array);
+            DFS(tree_array);
+            if (w <= getbound_width() && h <= getbound_height()) {
+                cout << "better sol found!\n";
+                DFS(tree_array);
+                calcA(w,h);
+                break;
+            }
         }
         r++;
     }
 
+    /*
+    tree_array = copytree(bestans, nullptr);
+    for (int i = 0; i < node_in_tree.size(); i++) {
+        if (node_in_tree[i]->block->getrotate()!=rotatearr[i]) {
+            node_in_tree[i]->block->_rotate();
+        }
+    }
+    node_in_tree.clear();
+    clonearray(tree_array);
+    DFS(tree_array);
+*/
 
 
 }
 
 int Floorplanner::calcA(int &W,int &H) {
-    Line* p = line;
+    Line* p = line->next;
      W, H = -1;
-    while (p->next != nullptr) {
+    while (p) {
         if (p->Y > H)
             H = p->Y;
+        if (p->x2 > W)
+            W = p->x2;
         p = p->next;
     }
-    W = p->x2;
     return W*H;
 }
 
@@ -402,6 +447,7 @@ int Floorplanner::calcW() {
 void Floorplanner::randomop() {
     
     int op =rand()%3+1;//op from 1 to 3
+
     int r;
     int d, i;
     int b;
@@ -411,7 +457,7 @@ void Floorplanner::randomop() {
         case 1:
             r= rand() % block_list.size();
             node_in_tree[r]->block->_rotate();
-            cout << "rotate : " << node_in_tree[r]->block->getName()<<endl;
+            //cout << "rotate : " << node_in_tree[r]->block->getName()<<endl;
             break;
         case 2:
             while (1) {
@@ -422,11 +468,13 @@ void Floorplanner::randomop() {
             }
             _d = node_in_tree[d];
             _i = node_in_tree[i];
-            cout << "delete from : " << _d->block->getName() << "   insert to  : " << _i->block->getName()<<endl;
-            if(_d->parent->left==_d)
-               _d->parent->left = _d->left;
-            if (_d->parent->right == _d)
-                _d->parent->right = _d->right;
+            //cout << "delete from : " << _d->block->getName() << "   insert to  : " << _i->block->getName()<<endl;
+            if (_d->parent != nullptr) {
+                if (_d->parent->left == _d)
+                    _d->parent->left = _d->left;
+                if (_d->parent->right == _d)
+                    _d->parent->right = _d->right;
+            }
             _d->right=_d->left = nullptr;
             _d->parent = _i;
             b = rand() % 2;
@@ -438,7 +486,7 @@ void Floorplanner::randomop() {
                 _i->left = _d;
             }
             if (b == 1) {//i->right
-                _d->right = _i->right;
+                _d->right = _i->right;               
                 if (_i->right!= nullptr)
                     _i->right->parent = _d;
                 _i->right = _d;
@@ -453,18 +501,38 @@ void Floorplanner::randomop() {
             }
             Node* sw1 = node_in_tree[d];
             Node* sw2 = node_in_tree[i];
-            cout << "swap : " << sw1->block->getName() << " ,  " << sw2->block->getName()<<endl;
-            if (sw2->parent != nullptr) {
-                if (sw2->parent->left == sw2)
+            //cout << "swap : " << sw1->block->getName() << " ,  " << sw2->block->getName()<<endl;
+            if (sw1->block->getName() == "cc_12" && sw2->block->getName() == "clk")
+                int a = 0;
+            if (sw1->parent == sw2->parent) {
+                if (sw2->parent->left == sw2) {
+                    sw2->parent->right = sw2;
                     sw2->parent->left = sw1;
-                if (sw2->parent->right == sw2)
+                }
+                if (sw2->parent->right == sw2) {
                     sw2->parent->right = sw1;
+                    sw2->parent->left = sw2;
+                }
             }
-            if (sw1->parent != nullptr) {
-                if (sw1->parent->left == sw1)
-                    sw1->parent->left = sw2;
-                if (sw1->parent->right == sw1)
-                    sw1->parent->right = sw2;
+            else {
+                if (sw2->parent != nullptr) {
+                    if (sw2->parent->left == sw2)
+                        sw2->parent->left = sw1;
+                    if (sw2->parent->right == sw2)
+                        sw2->parent->right = sw1;
+                }
+                else {
+                    tree_array = sw1;
+                }
+                if (sw1->parent != nullptr) {
+                    if (sw1->parent->left == sw1)
+                        sw1->parent->left = sw2;
+                    if (sw1->parent->right == sw1)
+                        sw1->parent->right = sw2;
+                }
+                else {
+                    tree_array = sw2;
+                }
             }
             Node* par = sw1->parent;
             sw1->parent = sw2->parent;
@@ -482,19 +550,27 @@ void Floorplanner::randomop() {
                 sw2->left->parent = sw2;
             if (sw2->right != nullptr)
                 sw2->right->parent = sw2;
-           // swap(sw1->block, sw2->block);
             break;
      }
 }
 
-Node* Floorplanner::copytree(Node* head)
+Node* Floorplanner::copytree(Node* head,Node * parent)
 {
     if (head == nullptr)
         return nullptr;
     Node* tmp = new Node;
     tmp->block = head->block;
-    tmp->parent = head->parent;
-    tmp->left = copytree(head->left);
-    tmp->right = copytree(head->right);
+    tmp->parent =parent;
+    tmp->left = copytree(head->left,tmp);
+    tmp->right = copytree(head->right,tmp);
     return tmp;
+}
+
+
+void  Floorplanner::clonearray(Node* head) {
+    if (head == nullptr)
+        return;
+    node_in_tree.push_back(head);
+      clonearray(head->left);
+      clonearray(head->right);
 }

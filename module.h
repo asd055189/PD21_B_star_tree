@@ -58,9 +58,8 @@ public:
     static void setMaxX(int x)   { _maxX = x; }
     static void setMaxY(int y)   { _maxY = y; }
     void _rotate() { rotate = !rotate; }
-
 private:
-    bool rotate=false;
+    bool rotate;
     int          _w;         // width of the block
     int          _h;         // height of the block
     static int   _maxX;      // maximum x coordinate for all blocks
