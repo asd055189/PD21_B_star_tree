@@ -21,7 +21,10 @@ class Floorplanner{
         void output(fstream& out,double runtime);
         void plot();
         void SA();
+        void randomop();
+        Node* copytree(Node *head);
         int calcA(int& W, int& H);
+        int calcW();
     private:
         double Alpha;
         int bound_width;
@@ -37,6 +40,7 @@ class Floorplanner{
         Node* tree_array;
         vector<Block *> sorted_list;
         Line* line;
+        vector <Node*>node_in_tree;
 };
 
 

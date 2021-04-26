@@ -46,20 +46,21 @@ public:
     ~Block() { }
 
     // basic access methods
-    const int getWidth(bool rotate = false)  { return rotate? _h: _w; }
-    const int getHeight(bool rotate = false) { return rotate? _w: _h; }
+    const int getWidth()  { return rotate? _h: _w; }
+    const int getHeight() { return rotate? _w: _h; }
     const int getArea()  { return _h * _w; }
     static int getMaxX() { return _maxX; }
     static int getMaxY() { return _maxY; }
-
+    bool getrotate() { return rotate; }
     // set functions
     void setWidth(int w)         { _w = w; }
     void setHeight(int h)        { _h = h; }
     static void setMaxX(int x)   { _maxX = x; }
     static void setMaxY(int y)   { _maxY = y; }
-
+    void _rotate() { rotate = !rotate; }
 
 private:
+    bool rotate=false;
     int          _w;         // width of the block
     int          _h;         // height of the block
     static int   _maxX;      // maximum x coordinate for all blocks

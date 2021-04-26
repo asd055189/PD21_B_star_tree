@@ -91,14 +91,19 @@ Floorplanner::Floorplanner(fstream& input_blk,fstream& input_net,double alpha){
         }*/
     }
 }
-void Floorplanner::floorplan(){
-    initial_B_star_tree();
-    DFS(tree_array);
 
+void Floorplanner::floorplan(){
+    initial_B_star_tree();//init
+
+    DFS(tree_array);//init pack
+
+   SA();
 }
 
 void Floorplanner::initial_B_star_tree() {
     for (int i = 0; i < block_list.size();i++) {
+        if (block_list[i].getHeight() > block_list[i].getWidth())
+            block_list[i]._rotate();
         sorted_list.push_back(&block_list[i]);
     }
     //sort width & height
@@ -107,6 +112,7 @@ void Floorplanner::initial_B_star_tree() {
             return a->getWidth() > b->getWidth();
         return a->getHeight()>b->getHeight();});
     tree_array = new Node;
+    node_in_tree.push_back(tree_array);
     Node* root = tree_array;
     bool *put=new bool[sorted_list.size()]();
     int i = 0;
@@ -131,6 +137,7 @@ void Floorplanner::initial_B_star_tree() {
                     if (sorted_list[i]->getWidth()<=width&&h + sorted_list[i]->getHeight() < getbound_height()) {
                         h += sorted_list[i]->getHeight();
                         p->right = new Node;
+                        node_in_tree.push_back(p->right);
                         p->right->block = sorted_list[i];
                         p->right->parent = p;
                         p = p->right;
@@ -148,6 +155,7 @@ void Floorplanner::initial_B_star_tree() {
             break;
         h = 0;
         root->left = new Node;
+        node_in_tree.push_back(root->left);
         root->left->parent = root;
         root = root->left;
     }
@@ -254,18 +262,17 @@ void Floorplanner :: DFS(Node* node) {
         DFS(node->right);
     }
 }
+
 void Floorplanner::output(fstream& out,double runtime) {
     plot();
-    int Wire=0,W,H;
+    int Wire = calcW();
+    int W,H;
     int A = calcA(W,H);
-    for (auto i : net) {
-        int w = i.calcHPWL();
-        cout <<w << endl;
-        Wire += w;
-    }
+
     cout << "cost  factor : " << Alpha<<endl;
-    cout << "cost : " << Alpha * A + Alpha * Wire<<endl;
-    out << Alpha * A + Alpha * Wire << endl;
+    cout << "cost : " << int(Alpha * A + (1 - Alpha) * Wire) <<endl;
+    out << int(Alpha * A + (1 - Alpha) * Wire) << endl;
+    cout << "Wire : " << Wire << endl;
     cout << "area  : " << A << endl;
     out  << A << endl;
     cout << "width : " << W << " height : " << H<<endl;
@@ -277,11 +284,8 @@ void Floorplanner::output(fstream& out,double runtime) {
         out << node.getName() << " " << node.getX1() << " " << node.getY1() << " " << node.getX2() << " " << node.getY2() << " " << endl;
     }
 }
+
 void Floorplanner::plot() {
-    /////////////info. to show for gnu/////////////
-    int boundWidth =getbound_width();// user-define value (boundary info)
-    int boundHeight = getbound_height();// same above
- /////////////////////////////////////////////
  //gnuplot preset
     fstream outgraph("output.gp", ios::out);
     outgraph << "reset\n";
@@ -295,7 +299,9 @@ void Floorplanner::plot() {
         p = p->next;
     }
     X = p->x2;
-    outgraph << "set title \"The result of Floorplan"<<"[x:"<<X << "," << boundWidth <<"][y:"<< Y << "," << boundHeight<<"]\"\n";
+    int boundWidth = X;// user-define value (boundary info)
+    int boundHeight = Y;// same above
+    outgraph << "set title \"The result of Floorplan"<<"[x:"<<X << "," << getbound_width() <<"][y:"<< Y << "," << getbound_height()<<"]\"\n";
     int index = 1;
     // wirte block info into output.gp
     for (auto b : sorted_list)// for block
@@ -307,7 +313,12 @@ void Floorplanner::plot() {
         int y1 = b->getY2();
         int midX = (x0 + x1) / 2;
         int midY = (y0 + y1) / 2;
-
+        Line* P=line->next;
+        while (P) {
+            outgraph << "set arrow from " << P->x1 << "," << P->Y << " to " << P->x2 << "," << P->Y;
+            outgraph << " nohead  lc rgb \"red\" front\n";
+            P = P->next;
+        }
         outgraph << "set object " << index << " rect from "
             << x0 << "," << y0 << " to " << x1 << "," << y1 << " fs empty\n"
             << "set label " << "\"" << NodeName << "\"" << " at " << midX << "," << midY << " center\n";
@@ -326,11 +337,49 @@ void Floorplanner::plot() {
     outgraph << "set terminal x11 persist\n";
     outgraph << "replot\n";
     outgraph << "exit";
+    system("gnuplot output.gp");
     outgraph.close();
 }
+
 void Floorplanner::SA() {
     double T = 0;//init temperature
+    int r = 0;//# of iterations
+    double avgA, avgW;
+    int w, h;
+    srand(0); //set seed
+    Node *oldtree = copytree(tree_array);
+    bool* rotate = new bool[block_list.size()];
+    double cost = (1-Alpha) * calcW() + Alpha * calcA(w,h);
+    while (r < 1000) {
+        int i = 0;
+        for (auto node : node_in_tree) {
+            rotate[i] = node->block->getrotate();
+            i++;
+        }
+        randomop();
+        DFS(tree_array);
+        double ncost = (1 - Alpha) * calcW() + Alpha * calcA(w, h);
+        if (w > getbound_width() || h > getbound_height()) {
+            tree_array = copytree(oldtree);
+            i = 0;
+            for (auto node : node_in_tree) {
+                if (rotate[i] != node->block->getrotate())
+                    node->block->_rotate();
+                i++;
+            }
+            DFS(tree_array);
+            //plot();
+        }
+        else { 
+            cout << "===============success============\n";
+        }
+        r++;
+    }
+
+
+
 }
+
 int Floorplanner::calcA(int &W,int &H) {
     Line* p = line;
      W, H = -1;
@@ -341,4 +390,111 @@ int Floorplanner::calcA(int &W,int &H) {
     }
     W = p->x2;
     return W*H;
+}
+
+int Floorplanner::calcW() {
+    int W = 0;
+    for (auto node : net) 
+        W += node.calcHPWL();
+    return W;
+}
+
+void Floorplanner::randomop() {
+    
+    int op =rand()%3+1;//op from 1 to 3
+    int r;
+    int d, i;
+    int b;
+    Node* _d, *_i;
+ 
+    switch (op) {
+        case 1:
+            r= rand() % block_list.size();
+            node_in_tree[r]->block->_rotate();
+            cout << "rotate : " << node_in_tree[r]->block->getName()<<endl;
+            break;
+        case 2:
+            while (1) {
+                d = rand() % block_list.size() ;
+                i = rand() % block_list.size() ;
+                if (i != d&&node_in_tree[d]->left == nullptr && node_in_tree[d]->right == nullptr )
+                    break;
+            }
+            _d = node_in_tree[d];
+            _i = node_in_tree[i];
+            cout << "delete from : " << _d->block->getName() << "   insert to  : " << _i->block->getName()<<endl;
+            if(_d->parent->left==_d)
+               _d->parent->left = _d->left;
+            if (_d->parent->right == _d)
+                _d->parent->right = _d->right;
+            _d->right=_d->left = nullptr;
+            _d->parent = _i;
+            b = rand() % 2;
+
+            if (b == 0) {//i->left
+                _d->left = _i->left;
+                if(_i->left!=nullptr)
+                     _i->left->parent = _d;
+                _i->left = _d;
+            }
+            if (b == 1) {//i->right
+                _d->right = _i->right;
+                if (_i->right!= nullptr)
+                    _i->right->parent = _d;
+                _i->right = _d;
+            }
+            break;
+        case 3:
+            while (1) {
+                d = rand() % block_list.size();
+                i = rand() % block_list.size();
+                if (i != d )
+                    break;
+            }
+            Node* sw1 = node_in_tree[d];
+            Node* sw2 = node_in_tree[i];
+            cout << "swap : " << sw1->block->getName() << " ,  " << sw2->block->getName()<<endl;
+            if (sw2->parent != nullptr) {
+                if (sw2->parent->left == sw2)
+                    sw2->parent->left = sw1;
+                if (sw2->parent->right == sw2)
+                    sw2->parent->right = sw1;
+            }
+            if (sw1->parent != nullptr) {
+                if (sw1->parent->left == sw1)
+                    sw1->parent->left = sw2;
+                if (sw1->parent->right == sw1)
+                    sw1->parent->right = sw2;
+            }
+            Node* par = sw1->parent;
+            sw1->parent = sw2->parent;
+            sw2->parent = par;
+            Node* l=sw1->left, * r=sw1->right;
+            sw1->left = sw2->left;
+            sw1->right = sw2->right;
+            if(sw1->left!=nullptr)
+                sw1->left->parent = sw1;
+            if (sw1->right != nullptr)
+                sw1->right->parent = sw1;
+            sw2->left = l;
+            sw2->right = r;
+            if (sw2->left != nullptr)
+                sw2->left->parent = sw2;
+            if (sw2->right != nullptr)
+                sw2->right->parent = sw2;
+           // swap(sw1->block, sw2->block);
+            break;
+     }
+}
+
+Node* Floorplanner::copytree(Node* head)
+{
+    if (head == nullptr)
+        return nullptr;
+    Node* tmp = new Node;
+    tmp->block = head->block;
+    tmp->parent = head->parent;
+    tmp->left = copytree(head->left);
+    tmp->right = copytree(head->right);
+    return tmp;
 }
