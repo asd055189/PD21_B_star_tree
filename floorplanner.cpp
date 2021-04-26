@@ -275,6 +275,7 @@ void Floorplanner::output(fstream& out,double runtime) {
     cout << "cost : " << int(Alpha * A + (1 - Alpha) * Wire) <<endl;
     out << int(Alpha * A + (1 - Alpha) * Wire) << endl;
     cout << "Wire : " << Wire << endl;
+    out << Wire << endl;
     cout << "area  : " << A << endl;
     out  << A << endl;
     cout << "width : " << W << " height : " << H<<endl;
