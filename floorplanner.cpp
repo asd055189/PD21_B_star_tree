@@ -427,7 +427,7 @@ void Floorplanner::SA() {
 
 int Floorplanner::calcA(int &W,int &H) {
     Line* p = line->next;
-     W, H = -1;
+     W= H = -1;
     while (p) {
         if (p->Y > H)
             H = p->Y;
