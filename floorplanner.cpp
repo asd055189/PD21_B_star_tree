@@ -455,7 +455,6 @@ void Floorplanner::SA() {
             T = (temperature * avgtemp) / r * _c;
         else if (_k < r)
             T = (temperature * avgtemp) / r;
-        plot();
         r++;
 
     }
