@@ -345,32 +345,64 @@ void Floorplanner::plot() {
 }
 
 void Floorplanner::SA() {
-    double T = 0;//init temperature
-    int r = 0;//# of iterations
-    double avgA, avgW;
+
+    double avgA, avgW,avgU;
     int w, h;
 
     srand(0); //set seed
 
     Node *oldtree = copytree(tree_array,nullptr);
     Node* bestans = copytree(tree_array, nullptr);
-    long long int A = 0, W = 0;
+    long long int A = 0, W = 0,U=0;
+    vector<bool> initrotatearr;
+    vector<bool> bestrotatearr;
+    for (auto node : node_in_tree) {
+        initrotatearr.push_back(node->block->getrotate());
+        bestrotatearr.push_back(node->block->getrotate());
+    }
+    double c= (1 - Alpha) * (A)+Alpha * (W);
+
     for (int i = 0; i < 100; i++) {
         A += calcA(w,h);
         W += calcW();
         randomop();
+        double ncost = (1 - Alpha) * (A ) + Alpha * (W );
+        if (ncost > c) {
+            U += ncost;
+        }
     }
+
+    //back to init
     tree_array = copytree(oldtree, nullptr);
     node_in_tree.clear();
     clonearray(tree_array);
-    DFS(tree_array); 
+    for (int i = 0; i < node_in_tree.size(); i++) {
+        if (node_in_tree[i]->block->getrotate() != initrotatearr[i]) {
+            node_in_tree[i]->block->_rotate();
+        }
+    }
+    node_in_tree.clear();
+    clonearray(tree_array);
+    DFS(tree_array);
+    //back to init
+    plot();
+    cout << "\n\nstart here\n\n";
     avgA = A / 100;
     avgW = W / 100;
-
+    avgU = -U / 100;
     A = calcA(w,h);
     W = calcW();
+    double p = 0.9;//init p
     double cost = (1 - Alpha) * (A / avgA) + Alpha * (W / avgW);
-    while (r < 1000) {
+
+    double temperature = avgU / log(p);
+
+    int _c = 100, _k = 7;
+    double avgtemp=0;
+    int r = 1;//# of iterations
+    double T = temperature;
+    while (T>0) {
+        Node* oldtree = copytree(tree_array, nullptr);
         vector<bool> rotatearr;
         for (auto node : node_in_tree) {
             rotatearr.push_back(node->block->getrotate());
@@ -380,49 +412,63 @@ void Floorplanner::SA() {
         DFS(tree_array);
         W = calcW();
         A = calcA(w, h);
-        double newcost = (1 - Alpha) *(A/ avgA) + Alpha *(W/avgW);
+        if (w <= 0 || h <= 0) {
+            cout << "boundary error!";
+            system("pause");
+        }
+        double newcost = (1 - Alpha) * (A / avgA) + Alpha * (W / avgW);
         double diff = newcost - cost;
+        avgtemp = ((r - 1) * avgtemp + diff) / r;
         if (diff > 0) {//up move
-            cout << "===============up move\n";
-            tree_array = copytree(oldtree, nullptr);
-            for (int i = 0; i < node_in_tree.size(); i++) {
-                if (node_in_tree[i]->block->getrotate() != rotatearr[i]) {
-                    node_in_tree[i]->block->_rotate();
+            double dice = (double)rand() / (RAND_MAX + 1.0);
+            if (dice > p) {
+                //reject change
+                tree_array = copytree(oldtree, nullptr);
+                node_in_tree.clear();
+                clonearray(tree_array);
+                for (int i = 0; i < node_in_tree.size(); i++) {
+                    if (node_in_tree[i]->block->getrotate() != rotatearr[i]) {
+                        node_in_tree[i]->block->_rotate();
+                    }
                 }
+                DFS(tree_array);
             }
-            node_in_tree.clear();
-            clonearray(tree_array);
-            DFS(tree_array);
         }
         if (diff <= 0) {//down move
-            cout << "===============================down move\n";
-            oldtree = copytree(tree_array, nullptr);
-            node_in_tree.clear();
-            clonearray(tree_array);
-            DFS(tree_array);
-            if (w <= getbound_width() && h <= getbound_height()) {
-                cout << "better sol found!\n";
-                DFS(tree_array);
-                calcA(w,h);
+            if (w < getbound_width() && h < getbound_height()) {
+                plot();
+                cout << "\n\n===best solution changed!===\n\n";
+                bestrotatearr.clear();
+                for (auto node : node_in_tree) {
+                    bestrotatearr.push_back(node->block->getrotate());
+                }
+                bestans = copytree(tree_array, nullptr);
                 break;
             }
-        }
-        r++;
-    }
+            rotatearr.clear();
+            for (auto node : node_in_tree) {
+                rotatearr.push_back(node->block->getrotate());
 
-    /*
+            }
+        }
+        if (2 <= r && r <= _k)
+            T = (temperature * avgtemp) / r * _c;
+        else if (_k < r)
+            T = (temperature * avgtemp) / r;
+        plot();
+        r++;
+
+    }
     tree_array = copytree(bestans, nullptr);
-    for (int i = 0; i < node_in_tree.size(); i++) {
-        if (node_in_tree[i]->block->getrotate()!=rotatearr[i]) {
+    node_in_tree.clear();
+    clonearray(tree_array);
+    for (int i = 0; i < bestrotatearr.size(); i++) {
+        if (node_in_tree[i]->block->getrotate() != bestrotatearr[i]) {
             node_in_tree[i]->block->_rotate();
         }
     }
-    node_in_tree.clear();
-    clonearray(tree_array);
     DFS(tree_array);
-*/
-
-
+    plot();
 }
 
 int Floorplanner::calcA(int &W,int &H) {
@@ -502,7 +548,7 @@ void Floorplanner::randomop() {
             }
             Node* sw1 = node_in_tree[d];
             Node* sw2 = node_in_tree[i];
-            //cout << "swap : " << sw1->block->getName() << " ,  " << sw2->block->getName()<<endl;
+           // cout << "swap : " << sw1->block->getName() << " ,  " << sw2->block->getName()<<endl;
             if (sw1->block->getName() == "cc_12" && sw2->block->getName() == "clk")
                 int a = 0;
             if (sw1->parent == sw2->parent) {
@@ -572,6 +618,7 @@ void  Floorplanner::clonearray(Node* head) {
     if (head == nullptr)
         return;
     node_in_tree.push_back(head);
+
+    clonearray(head->right);
       clonearray(head->left);
-      clonearray(head->right);
 }
