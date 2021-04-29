@@ -516,7 +516,7 @@ void Floorplanner::randomop() {
 		r = rand() % block_list.size();
 		node_in_tree[r]->block->_rotate();
 		break;
-	case 2://delete and insert
+	case 2://delete and inset
 		while (1) {
 			d = rand() % block_list.size();
 			i = rand() % block_list.size();
