@@ -8,6 +8,8 @@ Floorplanner::Floorplanner(fstream& input_blk, fstream& input_net, double alpha,
 	Alpha = alpha;
 
 	string str;
+	unordered_map<string, int>block_list_map;
+	unordered_map<string, int>terminal_list_map;
 
 	input_blk >> str;
 	if (str == "Outline:") {
@@ -41,7 +43,7 @@ Floorplanner::Floorplanner(fstream& input_blk, fstream& input_net, double alpha,
 
 		Block tmp(name, w, h);
 		block_list.push_back(tmp);
-
+		block_list_map.insert(pair<string, int>(name, i));
 	}
 
 	for (int i = 0; i < getnum_terminal(); i++) {
@@ -56,7 +58,7 @@ Floorplanner::Floorplanner(fstream& input_blk, fstream& input_net, double alpha,
 
 		Terminal tmp(name, w, h);
 		terminal_list.push_back(tmp);
-
+		terminal_list_map.insert(pair<string, int>(name, i));
 	}
 
 	input_net >> str;
@@ -71,6 +73,15 @@ Floorplanner::Floorplanner(fstream& input_blk, fstream& input_net, double alpha,
 			input_net >> str;
 			int N = atoi(str.c_str());
 			Net tmp;
+			for (int j = 0; j < N; j++) {
+				input_net >> str;
+				unordered_map<string, int>::iterator it1 = terminal_list_map.find(str);
+				unordered_map<string, int>::iterator it2 = block_list_map.find(str);
+				if (it1 != terminal_list_map.end())
+					tmp.addTerm(&terminal_list[it1->second]);
+				else if (it2 != block_list_map.end())
+					tmp.addTerm(&block_list[it2->second]);
+			}
 			input_net >> str;
 			net.push_back(tmp);
 		}
