@@ -1,2 +1,2 @@
-compile : make
-run : ./bin/fp [alpha] [block] [nets] [output]
+compile : `make`
+run : `./bin/fp [alpha] [block] [nets] [output]`
