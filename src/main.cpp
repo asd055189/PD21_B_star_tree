@@ -42,6 +42,7 @@ int main(int argc, char** argv)
     fp->floorplan();
     end = time(NULL);
     double runtime = difftime(end, start);
+    //cout <<start<<" "<<end;
     fp->output(output,runtime);
    // system("pause");
     return 0;

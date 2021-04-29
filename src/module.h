@@ -84,7 +84,7 @@ public:
     double calcHPWL() {
         double minx = INT_MAX, miny = INT_MAX, maxx = 0, maxy = 0;
         for (auto i : _termList) {
-            double Y = (i->getY2() + i->getY1()) / 2, X = (i->getX2() + i->getX1()) / 2;
+            double Y = (i->getY2() + i->getY1()) / 2.0, X = (i->getX2() + i->getX1()) / 2.0;
             if (X > maxx)
                 maxx = X;
             if (Y > maxy)
