@@ -38,11 +38,11 @@ int main(int argc, char** argv)
                 "<input net file> <output file>" << endl;
         exit(1);
     }
-    Floorplanner* fp = new Floorplanner(input_blk, input_net,alpha);
+    Floorplanner* fp = new Floorplanner(input_blk, input_net,alpha, start);
     fp->floorplan();
     end = time(NULL);
     double runtime = difftime(end, start);
     fp->output(output,runtime);
-    system("pause");
+   // system("pause");
     return 0;
 }
