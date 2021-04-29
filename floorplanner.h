@@ -24,10 +24,7 @@ class Floorplanner{
         void printtree(Node* head);
         Node* copytree(Node *head, Node* parent);
         int calcA(int& W, int& H);
-        int calcW();
-
-
-
+        double calcW();
         void  clonearray(Node* head);
     private:
         time_t start;

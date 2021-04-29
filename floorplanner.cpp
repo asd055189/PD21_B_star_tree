@@ -82,9 +82,9 @@ Floorplanner::Floorplanner(fstream& input_blk, fstream& input_net, double alpha,
 				else if (it2 != block_list_map.end())
 					tmp.addTerm(&block_list[it2->second]);
 			}
-			input_net >> str;
 			net.push_back(tmp);
 		}
+		
 	}
 }
 
@@ -506,8 +506,8 @@ int Floorplanner::calcA(int& W, int& H) {
 	return W * H;
 }
 
-int Floorplanner::calcW() {
-	int W = 0;
+double Floorplanner::calcW() {
+	double W = 0;
 	for (auto node : net)
 		W += node.calcHPWL();
 	return W;
